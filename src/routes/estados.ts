@@ -1,5 +1,5 @@
 import express from "express";
-import { estados } from "../db/schema/estados.js";
+import { estados } from "../db/schema/tables/estados.js";
 import { and, desc, ilike, getTableColumns, or } from "drizzle-orm";
 import { db } from "../db/index.js";
 
