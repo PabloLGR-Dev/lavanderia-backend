@@ -1,6 +1,6 @@
 import express from "express";
-import { clientes } from "../db/schema/clientes.js";
-import { estados } from "../db/schema/estados.js";
+import { clientes } from "../db/schema/tables/clientes.js";
+import { estados } from "../db/schema/tables/estados.js";
 import { or, and, desc, eq, ilike, getTableColumns, sql } from "drizzle-orm";
 import { db } from "../db/index.js";
 
