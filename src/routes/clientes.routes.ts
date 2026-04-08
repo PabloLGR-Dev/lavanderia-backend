@@ -4,16 +4,22 @@ import {
   getClienteById, 
   createCliente, 
   updateCliente, 
-  deleteCliente 
+  deleteCliente,
+  getClientesActivos,
+  getClienteInfoParaFactura
 } from '../controllers/clientes.controller.js';
 
 const router = Router();
 
-// Definimos los endpoints para /api/clientes
-router.get('/', getClientes);           // GET /api/clientes
-router.get('/:id', getClienteById);     // GET /api/clientes/1
-router.post('/', createCliente);        // POST /api/clientes
-router.put('/:id', updateCliente);      // PUT /api/clientes/1
-router.delete('/:id', deleteCliente);   // DELETE /api/clientes/1
+// IMPORTANTE: Las rutas estáticas (/activos) deben ir ANTES que las dinámicas (/:id)
+// de lo contrario Express pensará que "activos" es un ID.
+router.get('/activos', getClientesActivos);
+router.get('/:id/info-factura', getClienteInfoParaFactura);
+
+router.get('/', getClientes);           
+router.get('/:id', getClienteById);     
+router.post('/', createCliente);        
+router.put('/:id', updateCliente);      
+router.delete('/:id', deleteCliente);   
 
 export default router;

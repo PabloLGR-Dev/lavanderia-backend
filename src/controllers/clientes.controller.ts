@@ -3,7 +3,22 @@ import { eq, and, or, ilike, desc, sql } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import * as schema from '../db/schema.js';
 
-// 1. Obtener todos los clientes (Con Paginación, Búsqueda y Filtros)
+// --- HELPER PARA MAPEAR AL FORMATO DEL FRONTEND ---
+// Esto evita que el frontend se rompa por las minúsculas de PostgreSQL
+const mapClienteToDto = (c: any) => ({
+  idCliente: c.idcliente,
+  nombre: c.nombre,
+  apellido: c.apellido,
+  direccion: c.direccion,
+  telefono: c.telefono,
+  email: c.email,
+  idEstado: c.idestado,
+  fechaRegistro: c.fecharegistro,
+  fechaUltimaActualizacion: c.fechaultimaactualizacion,
+  notas: c.notas
+});
+
+// 1. Obtener todos los clientes (Paginado)
 export const getClientes = async (req: Request, res: Response) => {
   try {
     const { search, estado, page = 1, limit = 10 } = req.query;
@@ -20,13 +35,13 @@ export const getClientes = async (req: Request, res: Response) => {
         or(
           ilike(schema.clientes.nombre, searchStr),
           ilike(schema.clientes.apellido, searchStr),
-          ilike(schema.clientes.email, searchStr)
+          ilike(schema.clientes.email, searchStr),
+          ilike(schema.clientes.telefono, searchStr) // Agregado como en .NET
         )
       );
     }
 
     if (estado) {
-      // Corrección: idestado en minúscula
       filterConditions.push(eq(schema.clientes.idestado, Number(estado)));
     }
 
@@ -43,13 +58,15 @@ export const getClientes = async (req: Request, res: Response) => {
       .select()
       .from(schema.clientes)
       .where(whereClause)
-      // Corrección: fecharegistro en minúscula
       .orderBy(desc(schema.clientes.fecharegistro))
       .limit(limitPerPage)
       .offset(offset);
 
+    // Mapeamos la lista antes de enviarla
+    const dataMapped = clientesList.map(mapClienteToDto);
+
     res.status(200).json({
-      data: clientesList,
+      data: dataMapped,
       pagination: {
         page: currentPage,
         limit: limitPerPage,
@@ -57,7 +74,6 @@ export const getClientes = async (req: Request, res: Response) => {
         totalPages: Math.ceil(totalCount / limitPerPage),
       }
     });
-
   } catch (error) {
     console.error(`Get /clientes error: ${error}`);
     res.status(500).json({ error: 'Error al obtener los clientes' });
@@ -70,14 +86,11 @@ export const getClienteById = async (req: Request, res: Response) => {
     const { id } = req.params;
     const cliente = await db.select()
       .from(schema.clientes)
-      // Corrección: idcliente en minúscula
       .where(eq(schema.clientes.idcliente, Number(id)));
 
-    if (cliente.length === 0) {
-      return res.status(404).json({ message: 'Cliente no encontrado' });
-    }
+    if (cliente.length === 0) return res.status(404).json({ message: 'Cliente no encontrado' });
 
-    res.json(cliente[0]);
+    res.json(mapClienteToDto(cliente[0]));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al obtener el cliente' });
@@ -89,20 +102,21 @@ export const createCliente = async (req: Request, res: Response) => {
   try {
     const { nombre, apellido, direccion, telefono, email, idEstado, notas } = req.body;
 
+    if (!nombre) return res.status(400).json({ message: 'El nombre es obligatorio' });
+
     const nuevoCliente = await db.insert(schema.clientes)
       .values({
-        nombre,
-        apellido,
-        direccion,
-        telefono,
-        email,
-        notas,
-        // Corrección: Mapeamos la variable idEstado al campo idestado
+        nombre: nombre.trim(),
+        apellido: apellido?.trim(),
+        direccion: direccion?.trim(),
+        telefono: telefono?.trim(),
+        email: email?.trim(),
+        notas: notas?.trim(),
         idestado: idEstado || 1, 
       })
       .returning();
 
-    res.status(201).json(nuevoCliente[0]);
+    res.status(201).json(mapClienteToDto(nuevoCliente[0]));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al crear el cliente' });
@@ -113,52 +127,102 @@ export const createCliente = async (req: Request, res: Response) => {
 export const updateCliente = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    // Desestructuramos para evitar inyectar campos no válidos y manejar las mayúsculas
     const { nombre, apellido, direccion, telefono, email, idEstado, notas } = req.body;
 
     const clienteActualizado = await db.update(schema.clientes)
       .set({
-        ...(nombre !== undefined && { nombre }),
-        ...(apellido !== undefined && { apellido }),
-        ...(direccion !== undefined && { direccion }),
-        ...(telefono !== undefined && { telefono }),
-        ...(email !== undefined && { email }),
-        ...(notas !== undefined && { notas }),
-        ...(idEstado !== undefined && { idestado: idEstado }), // Mapeo a minúscula
-        fechaultimaactualizacion: new Date().toISOString(), // Corrección: fechaultimaactualizacion en minúscula
+        ...(nombre !== undefined && { nombre: nombre.trim() }),
+        ...(apellido !== undefined && { apellido: apellido.trim() }),
+        ...(direccion !== undefined && { direccion: direccion.trim() }),
+        ...(telefono !== undefined && { telefono: telefono.trim() }),
+        ...(email !== undefined && { email: email.trim() }),
+        ...(notas !== undefined && { notas: notas.trim() }),
+        ...(idEstado !== undefined && { idestado: idEstado }), 
+        fechaultimaactualizacion: new Date().toISOString(), 
       })
-      // Corrección: idcliente en minúscula
       .where(eq(schema.clientes.idcliente, Number(id)))
       .returning();
 
-    if (clienteActualizado.length === 0) {
-      return res.status(404).json({ message: 'Cliente no encontrado para actualizar' });
-    }
+    if (clienteActualizado.length === 0) return res.status(404).json({ message: 'Cliente no encontrado' });
 
-    res.json(clienteActualizado[0]);
+    res.json(mapClienteToDto(clienteActualizado[0]));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al actualizar el cliente' });
   }
 };
 
-// 5. Eliminar un cliente
+// 5. Eliminar un cliente (Soft Delete como en .NET)
 export const deleteCliente = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const clienteEliminado = await db.delete(schema.clientes)
-      // Corrección: idcliente en minúscula
+    // Soft delete: cambiar estado a 34 (o 2) e indicamos la fecha de actualización
+    const clienteEliminado = await db.update(schema.clientes)
+      .set({ 
+        idestado: 34, 
+        fechaultimaactualizacion: new Date().toISOString() 
+      })
       .where(eq(schema.clientes.idcliente, Number(id)))
       .returning();
 
-    if (clienteEliminado.length === 0) {
-      return res.status(404).json({ message: 'Cliente no encontrado para eliminar' });
-    }
+    if (clienteEliminado.length === 0) return res.status(404).json({ message: 'Cliente no encontrado' });
 
-    res.json({ message: 'Cliente eliminado correctamente', cliente: clienteEliminado[0] });
+    // .NET retornaba NoContent (204) para los deletes exitosos
+    res.status(204).send();
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Error al eliminar el cliente' });
+  }
+};
+
+// 6. Obtener clientes activos (Para dropdowns o selects)
+export const getClientesActivos = async (req: Request, res: Response) => {
+  try {
+    const clientes = await db.select()
+      .from(schema.clientes)
+      .where(eq(schema.clientes.idestado, 1)); // Estado 1 = Activo
+
+    // Ordenamos por nombre en memoria (opcional, Drizzle también puede hacerlo en BD)
+    clientes.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+    res.json(clientes.map(mapClienteToDto));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener clientes activos' });
+  }
+};
+
+// 7. Obtener Info específica para la pantalla de Facturación
+export const getClienteInfoParaFactura = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const cliente = await db.select()
+      .from(schema.clientes)
+      .where(
+        and(
+          eq(schema.clientes.idcliente, Number(id)),
+          eq(schema.clientes.idestado, 1) // Solo si está activo
+        )
+      );
+
+    if (cliente.length === 0) {
+      return res.status(404).json({ message: 'Cliente no encontrado o inactivo' });
+    }
+
+    const c = cliente[0];
+    
+    // Retornamos la estructura exacta que espera ClienteInfoDto en tu frontend
+    res.json({
+      idCliente: c.idcliente,
+      nombreCompleto: `${c.nombre} ${c.apellido || ''}`.trim(),
+      telefono: c.telefono,
+      email: c.email
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error al obtener la info del cliente' });
   }
 };
