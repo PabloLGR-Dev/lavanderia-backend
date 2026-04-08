@@ -1,0 +1,1711 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.configuraciones": {
+      "name": "configuraciones",
+      "schema": "",
+      "columns": {
+        "idconfiguracion": {
+          "name": "idconfiguracion",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "configuraciones_idconfiguracion_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "clave": {
+          "name": "clave",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "valor": {
+          "name": "valor",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tipodato": {
+          "name": "tipodato",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fechacreacion": {
+          "name": "fechacreacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "fechaultimaactualizacion": {
+          "name": "fechaultimaactualizacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "configuraciones_clave_key": {
+          "columns": [
+            "clave"
+          ],
+          "nullsNotDistinct": false,
+          "name": "configuraciones_clave_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.estados": {
+      "name": "estados",
+      "schema": "",
+      "columns": {
+        "idestado": {
+          "name": "idestado",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "estados_idestado_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "activo": {
+          "name": "activo",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false,
+          "default": true
+        },
+        "fechacreacion": {
+          "name": "fechacreacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.categoriasgasto": {
+      "name": "categoriasgasto",
+      "schema": "",
+      "columns": {
+        "idcategoriagasto": {
+          "name": "idcategoriagasto",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "categoriasgasto_idcategoriagasto_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "color": {
+          "name": "color",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'#6B7280'"
+        },
+        "idestado": {
+          "name": "idestado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "fechacreacion": {
+          "name": "fechacreacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_categoriasgasto_estados": {
+          "name": "fk_categoriasgasto_estados",
+          "tableFrom": "categoriasgasto",
+          "tableTo": "estados",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idestado"
+          ],
+          "columnsTo": [
+            "idestado"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.clientes": {
+      "name": "clientes",
+      "schema": "",
+      "columns": {
+        "idcliente": {
+          "name": "idcliente",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "clientes_idcliente_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "apellido": {
+          "name": "apellido",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "direccion": {
+          "name": "direccion",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "telefono": {
+          "name": "telefono",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idestado": {
+          "name": "idestado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecharegistro": {
+          "name": "fecharegistro",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "fechaultimaactualizacion": {
+          "name": "fechaultimaactualizacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_clientes_estados": {
+          "name": "fk_clientes_estados",
+          "tableFrom": "clientes",
+          "tableTo": "estados",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idestado"
+          ],
+          "columnsTo": [
+            "idestado"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.facturas": {
+      "name": "facturas",
+      "schema": "",
+      "columns": {
+        "idfactura": {
+          "name": "idfactura",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "facturas_idfactura_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "idcliente": {
+          "name": "idcliente",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nombrecliente": {
+          "name": "nombrecliente",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "telefonocliente": {
+          "name": "telefonocliente",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idusuario": {
+          "name": "idusuario",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idestado": {
+          "name": "idestado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "numerofactura": {
+          "name": "numerofactura",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fechacreacion": {
+          "name": "fechacreacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "fechaultimaactualizacion": {
+          "name": "fechaultimaactualizacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "fechaentregaestimada": {
+          "name": "fechaentregaestimada",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fechaentregareal": {
+          "name": "fechaentregareal",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subtotal": {
+          "name": "subtotal",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "impuestos": {
+          "name": "impuestos",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "descuento": {
+          "name": "descuento",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'0'"
+        },
+        "total": {
+          "name": "total",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metodopago": {
+          "name": "metodopago",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'efectivo'"
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "montoabonado": {
+          "name": "montoabonado",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "montopendiente": {
+          "name": "montopendiente",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idestadoentrega": {
+          "name": "idestadoentrega",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recogidopor": {
+          "name": "recogidopor",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "notasentrega": {
+          "name": "notasentrega",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_facturas_clientes": {
+          "name": "fk_facturas_clientes",
+          "tableFrom": "facturas",
+          "tableTo": "clientes",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idcliente"
+          ],
+          "columnsTo": [
+            "idcliente"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_facturas_estadoentrega": {
+          "name": "fk_facturas_estadoentrega",
+          "tableFrom": "facturas",
+          "tableTo": "estados",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idestadoentrega"
+          ],
+          "columnsTo": [
+            "idestado"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_facturas_estados": {
+          "name": "fk_facturas_estados",
+          "tableFrom": "facturas",
+          "tableTo": "estados",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idestado"
+          ],
+          "columnsTo": [
+            "idestado"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_facturas_usuarios": {
+          "name": "fk_facturas_usuarios",
+          "tableFrom": "facturas",
+          "tableTo": "usuarios",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idusuario"
+          ],
+          "columnsTo": [
+            "idusuario"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "facturas_numerofactura_key": {
+          "columns": [
+            "numerofactura"
+          ],
+          "nullsNotDistinct": false,
+          "name": "facturas_numerofactura_key"
+        }
+      },
+      "checkConstraints": {
+        "facturas_metodopago_check": {
+          "name": "facturas_metodopago_check",
+          "value": "(metodopago)::text = ANY ((ARRAY['otro'::character varying, 'transferencia'::character varying, 'tarjeta'::character varying, 'efectivo'::character varying])::text[])"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.detallefactura": {
+      "name": "detallefactura",
+      "schema": "",
+      "columns": {
+        "iddetalle": {
+          "name": "iddetalle",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "detallefactura_iddetalle_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "idfactura": {
+          "name": "idfactura",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idprendaservicio": {
+          "name": "idprendaservicio",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cantidad": {
+          "name": "cantidad",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "preciounitario": {
+          "name": "preciounitario",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "subtotal": {
+          "name": "subtotal",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "as": "((cantidad)::numeric * preciounitario)",
+            "type": "stored"
+          }
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fechacreacion": {
+          "name": "fechacreacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "idproducto": {
+          "name": "idproducto",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "tipoitem": {
+          "name": "tipoitem",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "generated": {
+            "as": "\nCASE\n    WHEN (idproducto IS NOT NULL) THEN 'Producto'::text\n    WHEN (idprendaservicio IS NOT NULL) THEN 'Servicio'::text\n    ELSE NULL::text\nEND",
+            "type": "stored"
+          }
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_detallefactura_factura": {
+          "name": "fk_detallefactura_factura",
+          "tableFrom": "detallefactura",
+          "tableTo": "facturas",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idfactura"
+          ],
+          "columnsTo": [
+            "idfactura"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_detallefactura_prendaservicio": {
+          "name": "fk_detallefactura_prendaservicio",
+          "tableFrom": "detallefactura",
+          "tableTo": "prendaservicio",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idprendaservicio"
+          ],
+          "columnsTo": [
+            "idprendaservicio"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_detallefactura_producto": {
+          "name": "fk_detallefactura_producto",
+          "tableFrom": "detallefactura",
+          "tableTo": "productos",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idproducto"
+          ],
+          "columnsTo": [
+            "idproducto"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "detallefactura_check": {
+          "name": "detallefactura_check",
+          "value": "((idprendaservicio IS NOT NULL) AND (idproducto IS NULL)) OR ((idprendaservicio IS NULL) AND (idproducto IS NOT NULL))"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.prendaservicio": {
+      "name": "prendaservicio",
+      "schema": "",
+      "columns": {
+        "idprendaservicio": {
+          "name": "idprendaservicio",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "prendaservicio_idprendaservicio_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "idprenda": {
+          "name": "idprenda",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idservicio": {
+          "name": "idservicio",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "preciounitario": {
+          "name": "preciounitario",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_prendaservicio_prendas": {
+          "name": "fk_prendaservicio_prendas",
+          "tableFrom": "prendaservicio",
+          "tableTo": "prendas",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idprenda"
+          ],
+          "columnsTo": [
+            "idprenda"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_prendaservicio_servicios": {
+          "name": "fk_prendaservicio_servicios",
+          "tableFrom": "prendaservicio",
+          "tableTo": "servicios",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idservicio"
+          ],
+          "columnsTo": [
+            "idservicio"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "prendaservicio_idprenda_idservicio_key": {
+          "columns": [
+            "idprenda",
+            "idservicio"
+          ],
+          "nullsNotDistinct": false,
+          "name": "prendaservicio_idprenda_idservicio_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.productos": {
+      "name": "productos",
+      "schema": "",
+      "columns": {
+        "idproducto": {
+          "name": "idproducto",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "productos_idproducto_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(150)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "codigobarras": {
+          "name": "codigobarras",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "precioventa": {
+          "name": "precioventa",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "costo": {
+          "name": "costo",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "stockactual": {
+          "name": "stockactual",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "stockminimo": {
+          "name": "stockminimo",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "default": 0
+        },
+        "idcategoria": {
+          "name": "idcategoria",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idestado": {
+          "name": "idestado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fechacreacion": {
+          "name": "fechacreacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_productos_categoriasproducto": {
+          "name": "fk_productos_categoriasproducto",
+          "tableFrom": "productos",
+          "tableTo": "categoriasproducto",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idcategoria"
+          ],
+          "columnsTo": [
+            "idcategoria"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_productos_estados": {
+          "name": "fk_productos_estados",
+          "tableFrom": "productos",
+          "tableTo": "estados",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idestado"
+          ],
+          "columnsTo": [
+            "idestado"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.usuarios": {
+      "name": "usuarios",
+      "schema": "",
+      "columns": {
+        "idusuario": {
+          "name": "idusuario",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "usuarios_idusuario_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "apellido": {
+          "name": "apellido",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "username": {
+          "name": "username",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "passwordhash": {
+          "name": "passwordhash",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idestado": {
+          "name": "idestado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fechacreacion": {
+          "name": "fechacreacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "fechaultimologin": {
+          "name": "fechaultimologin",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "passwordresettoken": {
+          "name": "passwordresettoken",
+          "type": "varchar(300)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "passwordresettokenexpiry": {
+          "name": "passwordresettokenexpiry",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_usuarios_estados": {
+          "name": "fk_usuarios_estados",
+          "tableFrom": "usuarios",
+          "tableTo": "estados",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idestado"
+          ],
+          "columnsTo": [
+            "idestado"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "usuarios_email_key": {
+          "columns": [
+            "email"
+          ],
+          "nullsNotDistinct": false,
+          "name": "usuarios_email_key"
+        },
+        "usuarios_username_key": {
+          "columns": [
+            "username"
+          ],
+          "nullsNotDistinct": false,
+          "name": "usuarios_username_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.gastos": {
+      "name": "gastos",
+      "schema": "",
+      "columns": {
+        "idgasto": {
+          "name": "idgasto",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "gastos_idgasto_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "idcategoriagasto": {
+          "name": "idcategoriagasto",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "monto": {
+          "name": "monto",
+          "type": "numeric(18, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fechagasto": {
+          "name": "fechagasto",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "referencia": {
+          "name": "referencia",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "comprobanteurl": {
+          "name": "comprobanteurl",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idusuario": {
+          "name": "idusuario",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idestado": {
+          "name": "idestado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "fechacreacion": {
+          "name": "fechacreacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "fechaultimaactualizacion": {
+          "name": "fechaultimaactualizacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_gastos_categoriasgasto": {
+          "name": "fk_gastos_categoriasgasto",
+          "tableFrom": "gastos",
+          "tableTo": "categoriasgasto",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idcategoriagasto"
+          ],
+          "columnsTo": [
+            "idcategoriagasto"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_gastos_estados": {
+          "name": "fk_gastos_estados",
+          "tableFrom": "gastos",
+          "tableTo": "estados",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idestado"
+          ],
+          "columnsTo": [
+            "idestado"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_gastos_usuarios": {
+          "name": "fk_gastos_usuarios",
+          "tableFrom": "gastos",
+          "tableTo": "usuarios",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idusuario"
+          ],
+          "columnsTo": [
+            "idusuario"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "gastos_monto_check": {
+          "name": "gastos_monto_check",
+          "value": "monto > (0)::numeric"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.pagos": {
+      "name": "pagos",
+      "schema": "",
+      "columns": {
+        "idpago": {
+          "name": "idpago",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "pagos_idpago_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "idfactura": {
+          "name": "idfactura",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "monto": {
+          "name": "monto",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idestado": {
+          "name": "idestado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fechapago": {
+          "name": "fechapago",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "fechaultima_actualizacion": {
+          "name": "fechaultima_actualizacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "metodopago": {
+          "name": "metodopago",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "referencia": {
+          "name": "referencia",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idusuario": {
+          "name": "idusuario",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "notas": {
+          "name": "notas",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_pagos_estados": {
+          "name": "fk_pagos_estados",
+          "tableFrom": "pagos",
+          "tableTo": "estados",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idestado"
+          ],
+          "columnsTo": [
+            "idestado"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_pagos_facturas": {
+          "name": "fk_pagos_facturas",
+          "tableFrom": "pagos",
+          "tableTo": "facturas",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idfactura"
+          ],
+          "columnsTo": [
+            "idfactura"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_pagos_usuarios": {
+          "name": "fk_pagos_usuarios",
+          "tableFrom": "pagos",
+          "tableTo": "usuarios",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idusuario"
+          ],
+          "columnsTo": [
+            "idusuario"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "pagos_metodopago_check": {
+          "name": "pagos_metodopago_check",
+          "value": "(metodopago)::text = ANY ((ARRAY['otro'::character varying, 'transferencia'::character varying, 'tarjeta'::character varying, 'efectivo'::character varying])::text[])"
+        }
+      },
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.prendas": {
+      "name": "prendas",
+      "schema": "",
+      "columns": {
+        "idprenda": {
+          "name": "idprenda",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "prendas_idprenda_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.servicios": {
+      "name": "servicios",
+      "schema": "",
+      "columns": {
+        "idservicio": {
+          "name": "idservicio",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "servicios_idservicio_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duracion_estimada": {
+          "name": "duracion_estimada",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idestado": {
+          "name": "idestado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fecha_creacion": {
+          "name": "fecha_creacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "fechaultimaactualizacion": {
+          "name": "fechaultimaactualizacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_servicios_estados": {
+          "name": "fk_servicios_estados",
+          "tableFrom": "servicios",
+          "tableTo": "estados",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idestado"
+          ],
+          "columnsTo": [
+            "idestado"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.categoriasproducto": {
+      "name": "categoriasproducto",
+      "schema": "",
+      "columns": {
+        "idcategoria": {
+          "name": "idcategoria",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "categoriasproducto_idcategoria_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.refreshtokens": {
+      "name": "refreshtokens",
+      "schema": "",
+      "columns": {
+        "idrefreshtokens": {
+          "name": "idrefreshtokens",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "refreshtokens_idrefreshtokens_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "idusuario": {
+          "name": "idusuario",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "expires": {
+          "name": "expires",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created": {
+          "name": "created",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdbyip": {
+          "name": "createdbyip",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revoked": {
+          "name": "revoked",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "revokedbyip": {
+          "name": "revokedbyip",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "replacedbytoken": {
+          "name": "replacedbytoken",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_refreshtokens_usuarios": {
+          "name": "fk_refreshtokens_usuarios",
+          "tableFrom": "refreshtokens",
+          "tableTo": "usuarios",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idusuario"
+          ],
+          "columnsTo": [
+            "idusuario"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.roles": {
+      "name": "roles",
+      "schema": "",
+      "columns": {
+        "idrol": {
+          "name": "idrol",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "byDefault",
+            "name": "roles_idrol_seq",
+            "increment": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "startWith": "1",
+            "cache": "1",
+            "cycle": false,
+            "schema": "public"
+          }
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "idestado": {
+          "name": "idestado",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fechacreacion": {
+          "name": "fechacreacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_roles_estados": {
+          "name": "fk_roles_estados",
+          "tableFrom": "roles",
+          "tableTo": "estados",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idestado"
+          ],
+          "columnsTo": [
+            "idestado"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "roles_nombre_key": {
+          "columns": [
+            "nombre"
+          ],
+          "nullsNotDistinct": false,
+          "name": "roles_nombre_key"
+        }
+      },
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    },
+    "public.usuariorol": {
+      "name": "usuariorol",
+      "schema": "",
+      "columns": {
+        "idusuario": {
+          "name": "idusuario",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idrol": {
+          "name": "idrol",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fechaasignacion": {
+          "name": "fechaasignacion",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_usuariorol_roles": {
+          "name": "fk_usuariorol_roles",
+          "tableFrom": "usuariorol",
+          "tableTo": "roles",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idrol"
+          ],
+          "columnsTo": [
+            "idrol"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_usuariorol_usuarios": {
+          "name": "fk_usuariorol_usuarios",
+          "tableFrom": "usuariorol",
+          "tableTo": "usuarios",
+          "schemaTo": "public",
+          "columnsFrom": [
+            "idusuario"
+          ],
+          "columnsTo": [
+            "idusuario"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "usuariorol_pkey": {
+          "name": "usuariorol_pkey",
+          "columns": [
+            "idusuario",
+            "idrol"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {},
+      "policies": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {}
+  }
+}
