@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { eq, or, ilike } from 'drizzle-orm';
+import { eq, or, ilike, and, ne } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { db } from '../db/index.js';
 import * as schema from '../db/schema.js';
@@ -34,7 +34,7 @@ export const getUsuarios = async (req: Request, res: Response) => {
 
         const usuarios = await query;
         
-        // Obtener los roles para cada usuario (simulando un Include en EF Core)
+        // Obtener los roles para cada usuario
         const usuariosConRoles = await Promise.all(usuarios.map(async (u) => {
             const rolesDelUsuario = await db.select({
                 idRol: schema.roles.idrol,
@@ -57,8 +57,37 @@ export const getUsuarios = async (req: Request, res: Response) => {
     }
 };
 
+// -------------------------------------------------------------------
+// IMPLEMENTACIÓN: getUsuarioById
+// -------------------------------------------------------------------
 export const getUsuarioById = async (req: Request, res: Response) => {
-    // ... Implementación similar a getUsuarios pero con where(eq(idusuario, id))
+    try {
+        const { id } = req.params;
+
+        const usuarios = await db.select()
+            .from(schema.usuarios)
+            .where(eq(schema.usuarios.idusuario, Number(id)));
+
+        if (usuarios.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        const usuario = usuarios[0];
+
+        // Buscar sus roles
+        const rolesDelUsuario = await db.select({
+            idRol: schema.roles.idrol,
+            nombre: schema.roles.nombre
+        })
+        .from(schema.usuariorol)
+        .innerJoin(schema.roles, eq(schema.usuariorol.idrol, schema.roles.idrol))
+        .where(eq(schema.usuariorol.idusuario, usuario.idusuario));
+
+        res.json(mapUserToDto(usuario, rolesDelUsuario));
+    } catch (error) {
+        console.error('Error obteniendo el usuario:', error);
+        res.status(500).json({ error: 'Error al obtener el usuario' });
+    }
 };
 
 export const createUsuario = async (req: Request, res: Response) => {
@@ -102,7 +131,7 @@ export const createUsuario = async (req: Request, res: Response) => {
             fechaasignacion: new Date().toISOString()
         });
 
-        res.status(201).json(mapUserToDto(nuevoUsuario[0], [{ idRol: rolId, nombre: 'Rol Asignado' }])); // Idealmente buscar el nombre real del rol
+        res.status(201).json(mapUserToDto(nuevoUsuario[0], [{ idRol: rolId, nombre: 'Rol Asignado' }]));
 
     } catch (error) {
         console.error(error);
@@ -110,8 +139,64 @@ export const createUsuario = async (req: Request, res: Response) => {
     }
 };
 
+// -------------------------------------------------------------------
+// IMPLEMENTACIÓN: updateUsuario
+// -------------------------------------------------------------------
 export const updateUsuario = async (req: Request, res: Response) => {
-     // ... Implementación del update de usuario (similar a updateCliente, validando correos únicos)
+    try {
+        const { id } = req.params;
+        const { nombre, apellido, email, idEstado } = req.body;
+        const userId = Number(id);
+
+        // Validar que el usuario exista
+        const existeUsuario = await db.select().from(schema.usuarios).where(eq(schema.usuarios.idusuario, userId));
+        if (existeUsuario.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        // Si se envió un email, validamos que no lo esté usando OTRA persona
+        if (email) {
+            const emailTrimmed = email.trim();
+            const existeEmail = await db.select()
+                .from(schema.usuarios)
+                .where(
+                    and(
+                        eq(schema.usuarios.email, emailTrimmed),
+                        ne(schema.usuarios.idusuario, userId) // ne = Not Equal (Distinto del ID actual)
+                    )
+                );
+
+            if (existeEmail.length > 0) {
+                return res.status(400).json({ message: "El email ya está registrado por otro usuario" });
+            }
+        }
+
+        // Actualizamos los campos enviados
+        const usuarioActualizado = await db.update(schema.usuarios)
+            .set({
+                ...(nombre !== undefined && { nombre: nombre.trim() }),
+                ...(apellido !== undefined && { apellido: apellido.trim() }),
+                ...(email !== undefined && { email: email.trim() }),
+                ...(idEstado !== undefined && { idestado: idEstado })
+            })
+            .where(eq(schema.usuarios.idusuario, userId))
+            .returning();
+
+        // Retornamos el usuario actualizado (Para mantener el DTO, le volvemos a buscar sus roles)
+        const rolesDelUsuario = await db.select({
+            idRol: schema.roles.idrol,
+            nombre: schema.roles.nombre
+        })
+        .from(schema.usuariorol)
+        .innerJoin(schema.roles, eq(schema.usuariorol.idrol, schema.roles.idrol))
+        .where(eq(schema.usuariorol.idusuario, userId));
+
+        res.json(mapUserToDto(usuarioActualizado[0], rolesDelUsuario));
+
+    } catch (error) {
+        console.error('Error al actualizar el usuario:', error);
+        res.status(500).json({ error: 'Error al actualizar el usuario' });
+    }
 };
 
 export const updateUsuarioRol = async (req: Request, res: Response) => {
@@ -121,7 +206,7 @@ export const updateUsuarioRol = async (req: Request, res: Response) => {
 
         if (!idRol) return res.status(400).json({ message: "El rol es requerido" });
 
-        // Eliminar roles anteriores (En este caso, solo 1 por usuario)
+        // Eliminar roles anteriores
         await db.delete(schema.usuariorol).where(eq(schema.usuariorol.idusuario, Number(id)));
 
         // Agregar nuevo
@@ -141,9 +226,6 @@ export const updateUsuarioRol = async (req: Request, res: Response) => {
 export const deleteUsuario = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        
-        // En .NET eliminabas físicamente al usuario y sus roles si no tenía facturas.
-        // Aquí deberías hacer un chequeo de las facturas primero.
         
         // 1. Eliminar sus roles
         await db.delete(schema.usuariorol).where(eq(schema.usuariorol.idusuario, Number(id)));

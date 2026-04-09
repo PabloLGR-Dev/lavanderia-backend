@@ -8,6 +8,8 @@ import usuariosRoutes from './routes/usuarios.routes.js';
 import configuracionesRoutes from './routes/configuraciones.routes.js';
 import authRoutes from './routes/auth.routes.js';
 import dashboardRoutes from './routes/dashboard.routes.js';
+import categoriasRoutes from './routes/categorias.routes.js';
+import productosRoutes from './routes/productos.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,12 +26,14 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 // Rutas
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/clientes', clientesRoutes);
 app.use('/api/roles', rolesRoutes);
 app.use('/api/users', usuariosRoutes); // Ojo: tu frontend lo llama 'users', no 'usuarios'
 app.use('/api/configuraciones', configuracionesRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/Categorias', categoriasRoutes); // Ojo a la mayúscula para coincidir con tu API_ENDPOINTS en React
+app.use('/api/productos', productosRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ message: '¡El backend de Lavandería Rodriguez está vivo y conectado!' });
