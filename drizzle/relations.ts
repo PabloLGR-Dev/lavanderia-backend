@@ -1,16 +1,15 @@
 import { relations } from "drizzle-orm/relations";
-import { estados, categoriasgasto, clientes, facturas, usuarios, detallefactura, prendaservicio, productos, prendas, servicios, categoriasproducto, gastos, pagos, refreshtokens, roles, usuariorol } from "./schema";
+import { estados, clientes, facturas, usuarios, detallefactura, prendaservicio, productos, prendas, servicios, categoriasproducto, categoriasgasto, gastos, pagos, refreshtokens, roles, usuariorol } from "./schema";
 
-export const categoriasgastoRelations = relations(categoriasgasto, ({one, many}) => ({
+export const clientesRelations = relations(clientes, ({one, many}) => ({
 	estado: one(estados, {
-		fields: [categoriasgasto.idestado],
+		fields: [clientes.idestado],
 		references: [estados.idestado]
 	}),
-	gastos: many(gastos),
+	facturas: many(facturas),
 }));
 
 export const estadosRelations = relations(estados, ({many}) => ({
-	categoriasgastos: many(categoriasgasto),
 	clientes: many(clientes),
 	facturas_idestadoentrega: many(facturas, {
 		relationName: "facturas_idestadoentrega_estados_idestado"
@@ -24,14 +23,7 @@ export const estadosRelations = relations(estados, ({many}) => ({
 	pagos: many(pagos),
 	servicios: many(servicios),
 	roles: many(roles),
-}));
-
-export const clientesRelations = relations(clientes, ({one, many}) => ({
-	estado: one(estados, {
-		fields: [clientes.idestado],
-		references: [estados.idestado]
-	}),
-	facturas: many(facturas),
+	categoriasgastos: many(categoriasgasto),
 }));
 
 export const facturasRelations = relations(facturas, ({one, many}) => ({
@@ -136,6 +128,14 @@ export const gastosRelations = relations(gastos, ({one}) => ({
 	usuario: one(usuarios, {
 		fields: [gastos.idusuario],
 		references: [usuarios.idusuario]
+	}),
+}));
+
+export const categoriasgastoRelations = relations(categoriasgasto, ({one, many}) => ({
+	gastos: many(gastos),
+	estado: one(estados, {
+		fields: [categoriasgasto.idestado],
+		references: [estados.idestado]
 	}),
 }));
 

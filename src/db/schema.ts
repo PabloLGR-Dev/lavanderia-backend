@@ -23,21 +23,6 @@ export const estados = pgTable("estados", {
 	fechacreacion: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const categoriasgasto = pgTable("categoriasgasto", {
-	idcategoriagasto: integer().primaryKey().generatedByDefaultAsIdentity({ name: "categoriasgasto_idcategoriagasto_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 2147483647, cache: 1 }),
-	nombre: varchar({ length: 100 }).notNull(),
-	descripcion: varchar({ length: 500 }),
-	color: varchar({ length: 20 }).default('#6B7280'),
-	idestado: integer().default(1).notNull(),
-	fechacreacion: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
-}, (table) => [
-	foreignKey({
-			columns: [table.idestado],
-			foreignColumns: [estados.idestado],
-			name: "fk_categoriasgasto_estados"
-		}),
-]);
-
 export const clientes = pgTable("clientes", {
 	idcliente: integer().primaryKey().generatedByDefaultAsIdentity({ name: "clientes_idcliente_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 2147483647, cache: 1 }),
 	nombre: varchar({ length: 100 }).notNull(),
@@ -327,6 +312,22 @@ export const roles = pgTable("roles", {
 	unique("roles_nombre_key").on(table.nombre),
 ]);
 
+export const categoriasgasto = pgTable("categoriasgasto", {
+	idcategoriagasto: integer().primaryKey().generatedByDefaultAsIdentity({ name: "categoriasgasto_idcategoriagasto_seq", startWith: 1, increment: 1, minValue: 1, maxValue: 2147483647, cache: 1 }),
+	nombre: varchar({ length: 100 }).notNull(),
+	descripcion: varchar({ length: 500 }),
+	color: varchar({ length: 20 }).default('#6B7280'),
+	idestado: integer().default(1).notNull(),
+	fechacreacion: timestamp({ mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	montopredefinido: numeric({ precision: 18, scale:  2 }),
+}, (table) => [
+	foreignKey({
+			columns: [table.idestado],
+			foreignColumns: [estados.idestado],
+			name: "fk_categoriasgasto_estados"
+		}),
+]);
+
 export const usuariorol = pgTable("usuariorol", {
 	idusuario: integer().notNull(),
 	idrol: integer().notNull(),
@@ -344,7 +345,3 @@ export const usuariorol = pgTable("usuariorol", {
 		}),
 	primaryKey({ columns: [table.idusuario, table.idrol], name: "usuariorol_pkey"}),
 ]);
-
-export type Cliente = typeof clientes.$inferSelect;
-export type NuevoCliente = typeof clientes.$inferInsert;
-export type Factura = typeof facturas.$inferSelect;
