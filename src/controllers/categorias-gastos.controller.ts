@@ -3,6 +3,21 @@ import { eq, ilike } from 'drizzle-orm';
 import { db } from '../db/index.js';
 import * as schema from '../db/schema.js';
 
+// --- HELPER DE ZONA HORARIA (República Dominicana UTC-4) ---
+const getDRDateTime = (dateVal?: string | Date) => {
+    const d = dateVal ? new Date(dateVal) : new Date();
+    const options: Intl.DateTimeFormatOptions = { 
+        timeZone: 'America/Santo_Domingo',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false 
+    };
+    const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(d);
+    const map = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+    const hour = map.hour === '24' ? '00' : map.hour;
+    return `${map.year}-${map.month}-${map.day}T${hour}:${map.minute}:${map.second}`;
+};
+
 export const getCategoriasActivas = async (req: Request, res: Response) => {
     try {
         const categorias = await db.select()
@@ -16,7 +31,7 @@ export const getCategoriasActivas = async (req: Request, res: Response) => {
             descripcion: c.descripcion,
             color: c.color,
             idEstado: c.idestado,
-            montoPredefinido: c.montopredefinido ? Number(c.montopredefinido) : null // NUEVO
+            montoPredefinido: c.montopredefinido ? Number(c.montopredefinido) : null 
         })));
     } catch (error) {
         res.status(500).json({ error: 'Error al obtener categorías activas' });
@@ -73,8 +88,8 @@ export const getCategoriasResumen = async (req: Request, res: Response) => {
                 color: c.categoria.color,
                 idEstado: c.categoria.idestado,
                 estado: c.estadoNombre,
-                fechaCreacion: c.categoria.fechacreacion,
-                montoPredefinido: c.categoria.montopredefinido ? Number(c.categoria.montopredefinido) : null, // NUEVO
+                fechaCreacion: c.categoria.fechacreacion ? c.categoria.fechacreacion.replace(" ", "T") : null,
+                montoPredefinido: c.categoria.montopredefinido ? Number(c.categoria.montopredefinido) : null,
                 totalGastos: gastosCat.length,
                 montoTotalGastos: gastosCat.reduce((sum, g) => sum + Number(g.monto), 0)
             };
@@ -110,7 +125,7 @@ export const getCategoriaById = async (req: Request, res: Response) => {
             descripcion: c.descripcion,
             color: c.color,
             idEstado: c.idestado,
-            montoPredefinido: c.montopredefinido ? Number(c.montopredefinido) : null // NUEVO
+            montoPredefinido: c.montopredefinido ? Number(c.montopredefinido) : null 
         });
     } catch (error) {
         res.status(500).json({ error: 'Error interno' });
@@ -129,8 +144,8 @@ export const createCategoriaGasto = async (req: Request, res: Response) => {
             descripcion: descripcion?.trim(),
             color: color || '#6B7280',
             idestado: idEstado || 1,
-            montopredefinido: montoPredefinido || null, // NUEVO
-            fechacreacion: new Date().toISOString()
+            montopredefinido: montoPredefinido ? String(montoPredefinido) : null,
+            fechacreacion: getDRDateTime() // USANDO ZONA HORARIA RD
         }).returning();
 
         res.status(201).json({ idCategoriaGasto: nueva[0].idcategoriagasto });
@@ -149,7 +164,7 @@ export const updateCategoriaGasto = async (req: Request, res: Response) => {
             ...(descripcion !== undefined && { descripcion: descripcion?.trim() }),
             ...(color && { color }),
             ...(idEstado && { idestado: idEstado }),
-            ...(montoPredefinido !== undefined && { montopredefinido: montoPredefinido }) // NUEVO
+            ...(montoPredefinido !== undefined && { montopredefinido: montoPredefinido ? String(montoPredefinido) : null }) 
         })
         .where(eq(schema.categoriasgasto.idcategoriagasto, Number(id)))
         .returning();
@@ -160,7 +175,6 @@ export const updateCategoriaGasto = async (req: Request, res: Response) => {
     }
 };
 
-// ... deleteCategoriaGasto y toggleEstado permanecen exactamente igual
 export const deleteCategoriaGasto = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;

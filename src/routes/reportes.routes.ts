@@ -1,20 +1,20 @@
 import { Router } from 'express';
 import { 
-    getResumenDashboard, 
+    getReporteFinancieroCompleto, 
     getResumenFinanciero, 
-    getEstadisticasFacturas, 
-    getUltimosMovimientos 
-} from '../controllers/dashboard.controller.js';
+    getEstadisticasGastos, 
+    getEstadisticasFacturas 
+} from '../controllers/reportes.controller.js';
 import { authorize } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// Todas las rutas del dashboard requieren autenticación
+// Todas las rutas de reportes requieren autenticación
 router.use(authorize);
 
-router.get('/resumen', getResumenDashboard);
+router.get('/financiero-completo', getReporteFinancieroCompleto);
 router.get('/resumen-financiero', getResumenFinanciero);
+router.get('/estadisticas-gastos', getEstadisticasGastos);
 router.get('/estadisticas-facturas', getEstadisticasFacturas);
-router.get('/ultimos-movimientos', getUltimosMovimientos);
 
 export default router;

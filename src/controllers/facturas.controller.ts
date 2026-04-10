@@ -4,7 +4,25 @@ import { db } from '../db/index.js';
 import * as schema from '../db/schema.js';
 import { AuthRequest } from '../middlewares/auth.middleware.js';
 
-// --- HELPER PARA CONFIGURACIONES ---
+// --- HELPER DE ZONA HORARIA (República Dominicana UTC-4) ---
+const getDRDateTime = (dateVal?: string | Date) => {
+    const d = dateVal ? new Date(dateVal) : new Date();
+    const options: Intl.DateTimeFormatOptions = { 
+        timeZone: 'America/Santo_Domingo',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false 
+    };
+    const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(d);
+    const map = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+    const hour = map.hour === '24' ? '00' : map.hour;
+    return `${map.year}-${map.month}-${map.day}T${hour}:${map.minute}:${map.second}`;
+};
+
+const getDRDateOnly = (dateVal?: string | Date) => {
+    return getDRDateTime(dateVal).substring(0, 10);
+};
+
 const getConfigBool = async (txOrDb: any, clave: string): Promise<boolean> => {
     const config = await txOrDb.select().from(schema.configuraciones).where(eq(schema.configuraciones.clave, clave));
     if (config.length === 0) return false;
@@ -26,12 +44,11 @@ export const getFacturasResumen = async (req: Request, res: Response) => {
         const filters = [];
 
         if (estadoId) filters.push(eq(schema.facturas.idestado, Number(estadoId)));
-        if (fechaDesde) filters.push(gte(schema.facturas.fechacreacion, new Date(fechaDesde as string).toISOString()));
-        if (fechaHasta) {
-            const dateHasta = new Date(fechaHasta as string);
-            dateHasta.setHours(23, 59, 59, 999);
-            filters.push(lte(schema.facturas.fechacreacion, dateHasta.toISOString()));
-        }
+        
+        // Uso de fechas locales de RD para los filtros
+        if (fechaDesde) filters.push(gte(schema.facturas.fechacreacion, getDRDateOnly(fechaDesde as string) + "T00:00:00"));
+        if (fechaHasta) filters.push(lte(schema.facturas.fechacreacion, getDRDateOnly(fechaHasta as string) + "T23:59:59"));
+        
         if (search) {
             const searchStr = `%${search}%`;
             filters.push(
@@ -83,8 +100,9 @@ export const getFacturasResumen = async (req: Request, res: Response) => {
             numeroFactura: f.factura.numerofactura,
             nombreCliente: f.factura.nombrecliente,
             telefonoCliente: f.factura.telefonocliente,
-            fechaCreacion: f.factura.fechacreacion ? new Date(f.factura.fechacreacion).toISOString() : null,
-            fechaEntregaEstimada: f.factura.fechaentregaestimada ? new Date(f.factura.fechaentregaestimada).toISOString() : null,
+            // Pasamos la fecha exacta de la DB reemplazando espacio por T para evitar conversión UTC del navegador
+            fechaCreacion: f.factura.fechacreacion ? f.factura.fechacreacion.replace(" ", "T") : null,
+            fechaEntregaEstimada: f.factura.fechaentregaestimada ? f.factura.fechaentregaestimada.replace(" ", "T") : null,
             total: Number(f.factura.total),
             montoAbonado: Number(f.factura.montoabonado || 0),
             montoPendiente: Number(f.factura.montopendiente || 0),
@@ -162,9 +180,9 @@ export const getFacturaDetallesCompletos = async (req: Request, res: Response) =
             numeroFactura: f.factura.numerofactura,
             nombreCliente: f.factura.nombrecliente,
             telefonoCliente: f.factura.telefonocliente,
-            fechaCreacion: f.factura.fechacreacion ? new Date(f.factura.fechacreacion).toISOString() : null,
-            fechaEntregaEstimada: f.factura.fechaentregaestimada ? new Date(f.factura.fechaentregaestimada).toISOString() : null,
-            fechaEntregaReal: f.factura.fechaentregareal ? new Date(f.factura.fechaentregareal).toISOString() : null,
+            fechaCreacion: f.factura.fechacreacion ? f.factura.fechacreacion.replace(" ", "T") : null,
+            fechaEntregaEstimada: f.factura.fechaentregaestimada ? f.factura.fechaentregaestimada.replace(" ", "T") : null,
+            fechaEntregaReal: f.factura.fechaentregareal ? f.factura.fechaentregareal.replace(" ", "T") : null,
             subtotal: Number(f.factura.subtotal),
             impuestos: Number(f.factura.impuestos || 0),
             descuento: Number(f.factura.descuento || 0),
@@ -212,7 +230,7 @@ export const getFacturaDetallesCompletos = async (req: Request, res: Response) =
             pagos: pagosDb.map(p => ({
                 idPago: p.pago.idpago,
                 monto: Number(p.pago.monto),
-                fechaPago: p.pago.fechapago ? new Date(p.pago.fechapago).toISOString() : null,
+                fechaPago: p.pago.fechapago ? p.pago.fechapago.replace(" ", "T") : null,
                 metodoPago: p.pago.metodopago,
                 referencia: p.pago.referencia,
                 notas: p.pago.notas,
@@ -257,8 +275,10 @@ export const createFactura = async (req: AuthRequest, res: Response) => {
                 throw new Error("Debe proporcionar el nombre del cliente");
             }
 
-            const hoy = new Date();
-            const dateStr = hoy.toISOString().slice(0, 10).replace(/-/g, '');
+            // HORA LOCAL DE REPÚBLICA DOMINICANA
+            const hoyStr = getDRDateTime();
+            const dateStr = getDRDateOnly().replace(/-/g, '');
+            
             const countResult = await tx.select({ count: sql<number>`count(*)` }).from(schema.facturas);
             const totalDocs = Number(countResult[0]?.count) || 0;
             const numeroFactura = `F-${dateStr}-${(totalDocs + 1).toString().padStart(4, '0')}`;
@@ -275,7 +295,7 @@ export const createFactura = async (req: AuthRequest, res: Response) => {
                 }
             }
 
-            let estadoFactura = 4; // 4 = pago_pendiente
+            let estadoFactura = 4; // Pendiente
             let montoAbonado = 0;
             const totalStr = (dto.total || 0).toString();
             let montoPendiente = Number(dto.total || 0);
@@ -283,23 +303,22 @@ export const createFactura = async (req: AuthRequest, res: Response) => {
             if (dto.pagoInmediato && dto.montoAbonado > 0) {
                 montoAbonado = Number(dto.montoAbonado);
                 montoPendiente = Number(dto.total || 0) - montoAbonado;
-                estadoFactura = montoPendiente <= 0 ? 5 : 4; // 5 = pago_completado
+                estadoFactura = montoPendiente <= 0 ? 5 : 4; // 5 Pagado, 4 Pendiente
             }
 
             let estadoEntrega = null;
             if (controlEntregasActivo) {
                 const tieneServicios = dto.detalles.some((d: any) => d.idPrendaServicio && d.idPrendaServicio > 0);
                 if (tieneServicios) {
-                    estadoEntrega = 7; // 7 = Entrega_Pendiente
+                    estadoEntrega = 7; // Entrega_Pendiente
                 }
             }
 
             let fechaEntregaFormatted = null;
             if (dto.fechaEntregaEstimada) {
-                fechaEntregaFormatted = new Date(dto.fechaEntregaEstimada).toISOString().split('T')[0];
+                fechaEntregaFormatted = getDRDateOnly(dto.fechaEntregaEstimada);
             }
 
-            // INSERCIÓN DE FACTURA
             const nuevaFactura = await tx.insert(schema.facturas).values({
                 idcliente: dto.idCliente ? Number(dto.idCliente) : null,
                 nombrecliente: nombreCliente.trim(),
@@ -307,8 +326,8 @@ export const createFactura = async (req: AuthRequest, res: Response) => {
                 idusuario: userId,
                 idestado: estadoFactura,
                 numerofactura: numeroFactura,
-                fechacreacion: hoy.toISOString(),
-                fechaultimaactualizacion: hoy.toISOString(), // CORREGIDO (todo minúscula)
+                fechacreacion: hoyStr,
+                fechaultimaactualizacion: hoyStr,
                 fechaentregaestimada: fechaEntregaFormatted,
                 subtotal: String(dto.subtotal || 0),
                 impuestos: String(dto.impuestos || 0),
@@ -329,7 +348,7 @@ export const createFactura = async (req: AuthRequest, res: Response) => {
                     cantidad: Number(detalle.cantidad),
                     preciounitario: String(detalle.precioUnitario || 0),
                     descripcion: detalle.descripcion || null,
-                    fechacreacion: hoy.toISOString(),
+                    fechacreacion: hoyStr,
                     idprendaservicio: detalle.idPrendaServicio ? Number(detalle.idPrendaServicio) : null,
                     idproducto: detalle.idProducto ? Number(detalle.idProducto) : null
                 });
@@ -341,14 +360,13 @@ export const createFactura = async (req: AuthRequest, res: Response) => {
                 }
             }
 
-            // INSERCIÓN DE PAGO
             if (dto.pagoInmediato && montoAbonado > 0) {
                 await tx.insert(schema.pagos).values({
                     idfactura: idFactura,
                     monto: String(montoAbonado),
                     idestado: 5, 
-                    fechapago: hoy.toISOString(),
-                    fechaultimaActualizacion: hoy.toISOString(), // <-- A MAYÚSCULA AQUÍ
+                    fechapago: hoyStr,
+                    fechaultimaActualizacion: hoyStr, 
                     metodopago: dto.metodoPago || 'efectivo',
                     referencia: dto.referenciaPago || null,
                     idusuario: userId,
@@ -368,6 +386,7 @@ export const registrarPago = async (req: AuthRequest, res: Response) => {
     const userId = Number(req.user.nameid);
     const idFactura = Number(req.params.id);
     const dto = req.body;
+    const hoyStr = getDRDateTime();
 
     try {
         await db.transaction(async (tx) => {
@@ -383,21 +402,21 @@ export const registrarPago = async (req: AuthRequest, res: Response) => {
 
             const nuevoAbonado = Number(f.montoabonado || 0) + Number(dto.monto);
             const nuevoPendiente = Number(f.total) - nuevoAbonado;
-            const nuevoEstado = nuevoPendiente <= 0 ? 5 : 4; // 5 Pagado, 4 Pendiente
+            const nuevoEstado = nuevoPendiente <= 0 ? 5 : 4; 
 
             await tx.update(schema.facturas).set({
                 montoabonado: String(nuevoAbonado),
                 montopendiente: String(nuevoPendiente),
                 idestado: nuevoEstado,
-                fechaultimaactualizacion: new Date().toISOString()
+                fechaultimaactualizacion: hoyStr
             }).where(eq(schema.facturas.idfactura, idFactura));
 
             await tx.insert(schema.pagos).values({
                 idfactura: idFactura,
                 monto: String(dto.monto || 0),
                 idestado: 5,
-                fechapago: new Date().toISOString(),
-                fechaultimaActualizacion: new Date().toISOString(), // <-- A MAYÚSCULA AQUÍ
+                fechapago: hoyStr,
+                fechaultimaActualizacion: hoyStr, 
                 metodopago: dto.metodoPago || 'efectivo',
                 referencia: dto.referencia || null,
                 idusuario: userId,
@@ -418,8 +437,8 @@ export const registrarPago = async (req: AuthRequest, res: Response) => {
 export const getEntregasResumen = async (req: Request, res: Response) => {
     try {
         const { estadoEntrega, search } = req.query;
-        
         const filters = [];
+        
         if (estadoEntrega) filters.push(eq(schema.facturas.idestadoentrega, Number(estadoEntrega)));
         if (search) {
             const searchStr = `%${search}%`;
@@ -432,7 +451,6 @@ export const getEntregasResumen = async (req: Request, res: Response) => {
         }
 
         const whereClause = filters.length > 0 ? and(...filters) : undefined;
-
         const facturasDb = await db.select({
             factura: schema.facturas,
             estadoNombre: schema.estados.nombre
@@ -464,9 +482,9 @@ export const getEntregasResumen = async (req: Request, res: Response) => {
                 numeroFactura: f.factura.numerofactura,
                 nombreCliente: f.factura.nombrecliente,
                 telefonoCliente: f.factura.telefonocliente,
-                fechaCreacion: f.factura.fechacreacion ? new Date(f.factura.fechacreacion).toISOString() : null,
-                fechaEntregaEstimada: f.factura.fechaentregaestimada ? new Date(f.factura.fechaentregaestimada).toISOString() : null,
-                fechaEntregaReal: f.factura.fechaentregareal ? new Date(f.factura.fechaentregareal).toISOString() : null,
+                fechaCreacion: f.factura.fechacreacion ? f.factura.fechacreacion.replace(" ", "T") : null,
+                fechaEntregaEstimada: f.factura.fechaentregaestimada ? f.factura.fechaentregaestimada.replace(" ", "T") : null,
+                fechaEntregaReal: f.factura.fechaentregareal ? f.factura.fechaentregareal.replace(" ", "T") : null,
                 total: Number(f.factura.total),
                 montoAbonado: Number(f.factura.montoabonado || 0),
                 montoPendiente: Number(f.factura.montopendiente || 0),
@@ -489,21 +507,15 @@ export const getEntregasResumen = async (req: Request, res: Response) => {
 export const getContadoresEntregas = async (req: Request, res: Response) => {
     try {
         const facturas = await db.select({ idestadoentrega: schema.facturas.idestadoentrega }).from(schema.facturas);
-        
         let pendientes = 0, completadas = 0, parciales = 0;
         
         facturas.forEach(f => {
-            if (f.idestadoentrega === 7) pendientes++; // 7 = Entrega_Pendiente
-            else if (f.idestadoentrega === 8) completadas++; // 8 = Entrega_Completada
-            else if (f.idestadoentrega === 9) parciales++; // 9 = Entrega_Parcial
+            if (f.idestadoentrega === 7) pendientes++; 
+            else if (f.idestadoentrega === 8) completadas++; 
+            else if (f.idestadoentrega === 9) parciales++; 
         });
 
-        res.json({
-            total: facturas.length,
-            pendientes,
-            completadas,
-            parciales
-        });
+        res.json({ total: facturas.length, pendientes, completadas, parciales });
     } catch (error) {
         res.status(500).json({ error: 'Error al obtener contadores' });
     }
@@ -519,14 +531,15 @@ export const marcarEntrega = async (req: Request, res: Response) => {
             return res.status(400).json({ message: "El control de entregas no está activo en configuración" });
         }
 
-        const idEstadoNuevo = dto.entregaParcial ? 9 : 8; // 9 Parcial, 8 Completada
+        const idEstadoNuevo = dto.entregaParcial ? 9 : 8; 
+        const hoyStr = getDRDateTime();
 
         await db.update(schema.facturas).set({
             idestadoentrega: idEstadoNuevo,
-            fechaentregareal: new Date().toISOString(),
+            fechaentregareal: hoyStr,
             recogidopor: dto.recogidoPor || null,
             notasentrega: dto.notasEntrega || null,
-            fechaultimaactualizacion: new Date().toISOString() // CORREGIDO
+            fechaultimaactualizacion: hoyStr
         }).where(eq(schema.facturas.idfactura, idFactura));
 
         res.json({ message: "Entrega registrada correctamente" });
@@ -543,7 +556,7 @@ export const actualizarEstadoEntrega = async (req: Request, res: Response) => {
         await db.update(schema.facturas).set({
             idestadoentrega: dto.idEstadoEntrega,
             notasentrega: dto.notasEntrega || null,
-            fechaultimaactualizacion: new Date().toISOString() // CORREGIDO
+            fechaultimaactualizacion: getDRDateTime()
         }).where(eq(schema.facturas.idfactura, idFactura));
 
         res.json({ message: "Estado de entrega actualizado correctamente" });
@@ -595,7 +608,7 @@ export const cambiarEstado = async (req: Request, res: Response) => {
         await db.update(schema.facturas).set({
             idestado: idEstado,
             ...(notas && { notas }),
-            fechaultimaactualizacion: new Date().toISOString() // CORREGIDO
+            fechaultimaactualizacion: getDRDateTime() 
         }).where(eq(schema.facturas.idfactura, idFactura));
 
         res.json({ message: "Estado actualizado correctamente" });
@@ -684,12 +697,8 @@ export const getEstadisticas = async (req: Request, res: Response) => {
         const { fechaDesde, fechaHasta } = req.query;
         const filters = [];
         
-        if (fechaDesde) filters.push(gte(schema.facturas.fechacreacion, new Date(fechaDesde as string).toISOString()));
-        if (fechaHasta) {
-            const dateHasta = new Date(fechaHasta as string);
-            dateHasta.setHours(23, 59, 59, 999);
-            filters.push(lte(schema.facturas.fechacreacion, dateHasta.toISOString()));
-        }
+        if (fechaDesde) filters.push(gte(schema.facturas.fechacreacion, getDRDateOnly(fechaDesde as string) + "T00:00:00"));
+        if (fechaHasta) filters.push(lte(schema.facturas.fechacreacion, getDRDateOnly(fechaHasta as string) + "T23:59:59"));
         
         const whereClause = filters.length > 0 ? and(...filters) : undefined;
         const facturas = await db.select().from(schema.facturas).where(whereClause);
@@ -698,8 +707,8 @@ export const getEstadisticas = async (req: Request, res: Response) => {
         const totalVentas = facturas.reduce((acc, f) => acc + Number(f.total), 0);
         const totalAbonado = facturas.reduce((acc, f) => acc + Number(f.montoabonado || 0), 0);
         const totalPendiente = facturas.reduce((acc, f) => acc + Number(f.montopendiente || 0), 0);
-        const facturasPagadas = facturas.filter(f => f.idestado === 5).length; // 5 = Pagado
-        const facturasPendientes = facturas.filter(f => f.idestado === 4).length; // 4 = Pendiente
+        const facturasPagadas = facturas.filter(f => f.idestado === 5).length; 
+        const facturasPendientes = facturas.filter(f => f.idestado === 4).length; 
         const promedioVenta = totalFacturas > 0 ? totalVentas / totalFacturas : 0;
 
         res.json({
@@ -720,10 +729,11 @@ export const getEstadisticas = async (req: Request, res: Response) => {
 export const getProximasEntrega = async (req: Request, res: Response) => {
     try {
         const dias = Number(req.query.dias) || 3;
-        const hoy = new Date();
-        const fechaLimite = new Date(hoy);
-        fechaLimite.setDate(hoy.getDate() + dias);
-        fechaLimite.setHours(23, 59, 59, 999);
+        // Simulamos la fecha actual en RD para calcular el límite
+        const hoyStr = getDRDateTime();
+        const hoyDate = new Date(hoyStr);
+        hoyDate.setDate(hoyDate.getDate() + dias);
+        const fechaLimiteIso = hoyDate.toISOString().split('T')[0] + "T23:59:59";
 
         const facturasDb = await db.select({
             factura: schema.facturas,
@@ -734,21 +744,22 @@ export const getProximasEntrega = async (req: Request, res: Response) => {
         .where(
             and(
                 sql`${schema.facturas.fechaentregaestimada} IS NOT NULL`,
-                lte(schema.facturas.fechaentregaestimada, fechaLimite.toISOString()),
-                sql`${schema.facturas.idestadoentrega} != 8` // 8 = Entrega Completada
+                lte(schema.facturas.fechaentregaestimada, fechaLimiteIso),
+                sql`${schema.facturas.idestadoentrega} != 8` 
             )
         )
         .orderBy(schema.facturas.fechaentregaestimada);
 
         const data = facturasDb.map(f => {
             const estimated = new Date(f.factura.fechaentregaestimada!);
-            const diasRestantes = Math.ceil((estimated.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24));
+            const hoyReal = new Date(hoyStr);
+            const diasRestantes = Math.ceil((estimated.getTime() - hoyReal.getTime()) / (1000 * 60 * 60 * 24));
             return {
                 idFactura: f.factura.idfactura,
                 numeroFactura: f.factura.numerofactura,
                 nombreCliente: f.factura.nombrecliente,
                 telefonoCliente: f.factura.telefonocliente,
-                fechaEntregaEstimada: estimated.toISOString(),
+                fechaEntregaEstimada: f.factura.fechaentregaestimada?.replace(" ", "T"),
                 total: Number(f.factura.total),
                 montoPendiente: Number(f.factura.montopendiente || 0),
                 estado: f.estadoNombre,
@@ -770,7 +781,7 @@ export const getFacturasPendientesPago = async (req: Request, res: Response) => 
         const limit = Math.max(1, Number(pageSize));
         const offset = (currentPage - 1) * limit;
 
-        const whereClause = eq(schema.facturas.idestado, 4); // 4 = Pendiente
+        const whereClause = eq(schema.facturas.idestado, 4); 
 
         const countResult = await db.select({ count: sql<number>`count(*)` })
             .from(schema.facturas)

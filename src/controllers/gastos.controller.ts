@@ -4,6 +4,25 @@ import { db } from '../db/index.js';
 import * as schema from '../db/schema.js';
 import { AuthRequest } from '../middlewares/auth.middleware.js';
 
+// --- HELPER DE ZONA HORARIA (República Dominicana UTC-4) ---
+const getDRDateTime = (dateVal?: string | Date) => {
+    const d = dateVal ? new Date(dateVal) : new Date();
+    const options: Intl.DateTimeFormatOptions = { 
+        timeZone: 'America/Santo_Domingo',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        hour12: false 
+    };
+    const parts = new Intl.DateTimeFormat('en-US', options).formatToParts(d);
+    const map = Object.fromEntries(parts.map(({ type, value }) => [type, value]));
+    const hour = map.hour === '24' ? '00' : map.hour;
+    return `${map.year}-${map.month}-${map.day}T${hour}:${map.minute}:${map.second}`;
+};
+
+const getDRDateOnly = (dateVal?: string | Date) => {
+    return getDRDateTime(dateVal).substring(0, 10);
+};
+
 export const getGastosResumen = async (req: Request, res: Response) => {
     try {
         const { categoriaId, fechaDesde, fechaHasta, search, page = 1, pageSize = 20 } = req.query;
@@ -14,18 +33,14 @@ export const getGastosResumen = async (req: Request, res: Response) => {
 
         const filters = [];
 
-        // Filtros de categoría y fechas
         if (categoriaId) filters.push(eq(schema.gastos.idcategoriagasto, Number(categoriaId)));
         
+        // Uso de Zona Horaria Local para los filtros
         if (fechaDesde) {
-            // Pasamos a string
-            filters.push(gte(schema.gastos.fechagasto, new Date(fechaDesde as string).toISOString()));
+            filters.push(gte(schema.gastos.fechagasto, getDRDateOnly(fechaDesde as string) + "T00:00:00"));
         }
         if (fechaHasta) {
-            const dateHasta = new Date(fechaHasta as string);
-            dateHasta.setHours(23, 59, 59, 999);
-            // Pasamos a string
-            filters.push(lte(schema.gastos.fechagasto, dateHasta.toISOString()));
+            filters.push(lte(schema.gastos.fechagasto, getDRDateOnly(fechaHasta as string) + "T23:59:59"));
         }
         
         if (search) {
@@ -35,7 +50,6 @@ export const getGastosResumen = async (req: Request, res: Response) => {
 
         const whereClause = filters.length > 0 ? and(...filters) : undefined;
 
-        // Obtener gastos con Joins
         const gastosDb = await db.select({
             gasto: schema.gastos,
             categoriaNombre: schema.categoriasgasto.nombre,
@@ -49,7 +63,6 @@ export const getGastosResumen = async (req: Request, res: Response) => {
         .innerJoin(schema.estados, eq(schema.gastos.idestado, schema.estados.idestado))
         .where(whereClause);
 
-        // Ordenar por fecha descendente
         gastosDb.sort((a, b) => new Date(b.gasto.fechagasto).getTime() - new Date(a.gasto.fechagasto).getTime());
 
         const totalRecords = gastosDb.length;
@@ -60,13 +73,14 @@ export const getGastosResumen = async (req: Request, res: Response) => {
             categoria: g.categoriaNombre,
             categoriaColor: g.categoriaColor || "#6B7280",
             monto: Number(g.gasto.monto),
-            fechaGasto: new Date(g.gasto.fechagasto).toISOString(),
+            // Evitamos toISOString() aquí para que el navegador no lo convierta a local de nuevo
+            fechaGasto: g.gasto.fechagasto ? g.gasto.fechagasto.replace(" ", "T") : null,
             descripcion: g.gasto.descripcion,
             referencia: g.gasto.referencia,
             comprobanteUrl: g.gasto.comprobanteurl,
             usuario: g.usuarioNombre,
             estado: g.estadoNombre,
-            fechaCreacion: new Date(g.gasto.fechacreacion).toISOString()
+            fechaCreacion: g.gasto.fechacreacion ? g.gasto.fechacreacion.replace(" ", "T") : null
         }));
 
         res.json({
@@ -90,18 +104,26 @@ export const createGasto = async (req: AuthRequest, res: Response) => {
     try {
         const userId = Number(req.user.nameid);
         const dto = req.body;
+        
+        const hoyStr = getDRDateTime();
+        
+        // Si mandan "YYYY-MM-DD", le pegamos la hora actual de RD
+        let fechaGastoFormat = hoyStr;
+        if (dto.fechaGasto) {
+            fechaGastoFormat = getDRDateOnly(dto.fechaGasto) + "T" + hoyStr.split("T")[1];
+        }
 
         const nuevoGasto = await db.insert(schema.gastos).values({
             idcategoriagasto: dto.idCategoriaGasto,
-            monto: dto.monto,
-            fechagasto: new Date(dto.fechaGasto).toISOString(),
+            monto: String(dto.monto),
+            fechagasto: fechaGastoFormat,
             descripcion: dto.descripcion.trim(),
-            referencia: dto.referencia?.trim(),
-            comprobanteurl: dto.comprobanteUrl?.trim(),
+            referencia: dto.referencia?.trim() || null,
+            comprobanteurl: dto.comprobanteUrl?.trim() || null,
             idusuario: userId,
             idestado: dto.idEstado || 1,
-            fechacreacion: new Date().toISOString(),
-            fechaultimaactualizacion: new Date().toISOString()
+            fechacreacion: hoyStr,
+            fechaultimaactualizacion: hoyStr
         }).returning();
 
         res.status(201).json({ idGasto: nuevoGasto[0].idgasto });
@@ -115,16 +137,22 @@ export const updateGasto = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
         const dto = req.body;
+        const hoyStr = getDRDateTime();
+
+        let fechaGastoFormat = undefined;
+        if (dto.fechaGasto) {
+            fechaGastoFormat = getDRDateOnly(dto.fechaGasto) + "T" + hoyStr.split("T")[1];
+        }
 
         await db.update(schema.gastos).set({
             ...(dto.idCategoriaGasto && { idcategoriagasto: dto.idCategoriaGasto }),
-            ...(dto.monto && { monto: dto.monto }),
-            ...(dto.fechaGasto && { fechagasto: new Date(dto.fechaGasto).toISOString() }),
+            ...(dto.monto && { monto: String(dto.monto) }),
+            ...(fechaGastoFormat && { fechagasto: fechaGastoFormat }),
             ...(dto.descripcion && { descripcion: dto.descripcion.trim() }),
             ...(dto.referencia !== undefined && { referencia: dto.referencia?.trim() }),
             ...(dto.comprobanteUrl !== undefined && { comprobanteurl: dto.comprobanteUrl?.trim() }),
             ...(dto.idEstado && { idestado: dto.idEstado }),
-            fechaultimaactualizacion: new Date().toISOString()
+            fechaultimaactualizacion: hoyStr
         })
         .where(eq(schema.gastos.idgasto, Number(id)));
 
@@ -147,20 +175,27 @@ export const getResumenFinanciero = async (req: Request, res: Response) => {
     try {
         const { fechaDesde, fechaHasta } = req.query;
         
-        const hoy = new Date();
-        const desdeDate = fechaDesde ? new Date(fechaDesde as string) : new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-        const hastaDate = fechaHasta ? new Date(fechaHasta as string) : new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59);
+        let desdeStr = "";
+        let hastaStr = "";
 
-        // Convertimos a strings para que Drizzle sea feliz
-        const desdeStr = desdeDate.toISOString();
-        const hastaStr = hastaDate.toISOString();
+        if (fechaDesde && fechaHasta) {
+            desdeStr = getDRDateOnly(fechaDesde as string) + "T00:00:00";
+            hastaStr = getDRDateOnly(fechaHasta as string) + "T23:59:59";
+        } else {
+            const hoyDate = getDRDateOnly();
+            const year = hoyDate.substring(0, 4);
+            const month = hoyDate.substring(5, 7);
+            const lastDay = new Date(Number(year), Number(month), 0).getDate();
+            desdeStr = `${year}-${month}-01T00:00:00`;
+            hastaStr = `${year}-${month}-${lastDay}T23:59:59`;
+        }
 
         // 1. Total Ingresos
         const facturas = await db.select({ montoAbonado: schema.facturas.montoabonado })
             .from(schema.facturas)
             .where(and(
-                gte(schema.facturas.fechacreacion, desdeStr),
-                lte(schema.facturas.fechacreacion, hastaStr)
+                gte(schema.facturas.fechacreacion, desdeStr.replace("T", " ")),
+                lte(schema.facturas.fechacreacion, hastaStr.replace("T", " "))
             ));
         
         const totalIngresos = facturas.reduce((sum, f) => sum + Number(f.montoAbonado || 0), 0);
@@ -169,8 +204,8 @@ export const getResumenFinanciero = async (req: Request, res: Response) => {
         const gastosDb = await db.select({ monto: schema.gastos.monto })
             .from(schema.gastos)
             .where(and(
-                gte(schema.gastos.fechagasto, desdeStr),
-                lte(schema.gastos.fechagasto, hastaStr)
+                gte(schema.gastos.fechagasto, desdeStr.replace("T", " ")),
+                lte(schema.gastos.fechagasto, hastaStr.replace("T", " "))
             ));
 
         const totalGastos = gastosDb.reduce((sum, g) => sum + Number(g.monto), 0);
